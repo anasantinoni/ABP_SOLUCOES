@@ -1,103 +1,82 @@
-import { View, Text, StyleSheet, Pressable, ScrollView } from "react-native";
-import { TextInput, useTheme } from "react-native-paper";
-import { Button } from "react-native-paper";
-import React from "react";
+import React, { useState, useEffect } from "react";
+import { View, StyleSheet, ScrollView } from "react-native";
+import Input from "../components/Input";
+import Button from "../components/Button";
+import Card from "../components/Card";
+import { useDatabase } from "../database/useDatabase";
 
 export default function PesquisaAluno({ navigation }) {
-  const theme = useTheme();
+  const [alunos, setAlunos] = useState([]);
+  const [searchTerm, setSearchTerm] = useState("");
+  const { getAlunos } = useDatabase();
 
-  //array para simular um banco de dados
-  const alunosData = [
-    { id: 1, nome: "João", idade: 20, cpf: "123.456.789-00" },
-    { id: 2, nome: "Maria", idade: 22, cpf: "123.456.789-00" },
-    { id: 3, nome: "José", idade: 21, cpf: "123.456.789-00" },
-    { id: 4, nome: "Ana", idade: 24, cpf: "123.456.789-00" },
-    { id: 5, nome: "Pedro", idade: 23, cpf: "123.456.789-00" },
-    { id: 6, nome: "Marta", idade: 19, cpf: "123.456.789-00" },
-    { id: 7, nome: "Carlos", idade: 25, cpf: "123.456.789-00" },
-    { id: 8, nome: "Paula", idade: 26, cpf: "123.456.789-00" },
-    { id: 9, nome: "Lucas", idade: 27, cpf: "123.456.789-00" },
-    { id: 10, nome: "Julia", idade: 28, cpf: "123.456.789-00" },
-  ];
-  const [aluno, setAluno] = React.useState(alunosData);
-
-  const buscarAluno = (nome) => {
-    const alunoResult = alunosData.filter((aluno) => (aluno.nome === nome) || (aluno.idade == nome));
-    if (alunoResult.length > 0) {
-      setAluno(alunoResult);
-    } else {
-      setAluno(alunosData);
+  const buscarAluno = async (nome) => {
+    try {
+      const alunosResult = await getAlunos(nome);
+      setAlunos(alunosResult); 
+    } catch (error) {
+      console.error("Erro ao buscar alunos:", error);
     }
   };
 
+  
+  useEffect(() => {
+    const unsubscribe = navigation.addListener("focus", () => {
+      buscarAluno(""); 
+    });
+    return unsubscribe;
+  }, [navigation]);
+
   return (
-    <ScrollView>
-    <View
-      style={[
-        styles.container,
-        {
-          alignItems: "center",
-        },
-      ]}
-    >
-      <View style={{
-        flexDirection: 'row',
-        justifyContent: 'center',
-        alignItems: 'center'
-      }}>
-        <TextInput
+    <View style={styles.container}>
+      <ScrollView contentContainerStyle={styles.scrollContainer}>
+        <Input
           label="Digite o nome do aluno"
-          style={{ width: "60%" }}
-          onChangeText={(text) => buscarAluno(text)}
+          placeholder="Ex: João"
+          value={searchTerm}
+          onChangeText={(text) => {
+            setSearchTerm(text);
+            buscarAluno(text); 
+          }}
         />
-        <Button onPress={ () => {navigation.navigate("CadastrarAluno")} } mode="contained" style={{ flex: "1"}} >Adicionar</Button>
-      </View>
-      {aluno ? (
-        aluno.map((aluno) => (
-          <Pressable
-            onPress={() => {
-              navigation.navigate("DetalhesAluno", { aluno });
-            }}
-            key={aluno.id}
-            style={{
-              padding: 10,
-              margin: 10,
-              backgroundColor: "#f0f0f0",
-              width: "100%",
-            }}
-          >
-            <Text style={
-              {
-                fontWeight: 'bold',
-                color: theme.colors.secondary
+        <View style={styles.cardContainer}>
+          {alunos.map((aluno) => (
+            <Card
+              key={aluno.id_aluno}
+              title={`Nome: ${aluno.nome_aluno}`}
+              description={`CPF: ${aluno.cpf_aluno}`}
+              onPress={() =>
+                navigation.navigate("DetalhesAluno", { alunoId: aluno.id_aluno })
               }
-            }>Renasch: {aluno.id}</Text>
-            <Text style={
-              {
-                fontWeight: 'bold',
-                color: theme.colors.secondary
-              }
-            }>Nome: {aluno.nome}</Text>
-            <Text style={
-              {
-                fontWeight: 'bold',
-                color: theme.colors.secondary
-              }
-            }>Idade: {aluno.idade}</Text>
-          </Pressable>
-        ))
-      ) : (
-        <Text>Aluno não encontrado</Text>
-      )}
+            />
+          ))}
+        </View>
+      </ScrollView>
+      <Button
+        title="Adicionar Aluno"
+        icon="add"
+        onPress={() => navigation.navigate("CadastrarAluno")}
+        style={styles.addButton}
+      />
     </View>
-    </ScrollView>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#fff",
+    backgroundColor: "#F4F4F4",
+  },
+  scrollContainer: {
     padding: 20,
+  },
+  cardContainer: {
+    marginTop: 20,
+  },
+  addButton: {
+    position: "absolute",
+    bottom: 20,
+    alignSelf: "center",
+    width: "90%",
   },
 });
