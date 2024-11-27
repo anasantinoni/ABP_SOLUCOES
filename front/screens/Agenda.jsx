@@ -10,43 +10,41 @@ import {
 import Input from "../components/Input";
 import Button from "../components/Button";
 import DateTimePicker from "@react-native-community/datetimepicker";
+import { useDatabase } from "../database/useDatabase";
 
 export default function CalendarScreen() {
   const [selectedDate, setSelectedDate] = useState(new Date());
-  const [showDatePicker, setShowDatePicker] = useState(false);
   const [modalVisible, setModalVisible] = useState(false);
   const [aulaSelecionada, setAulaSelecionada] = useState(null);
+  const [aulas, setAulas] = useState([]);
   const [showTimePicker, setShowTimePicker] = useState(false);
+  const { getAulas, addAula, updateAula } = useDatabase();
 
-  const horarios = Array.from({ length: 12 }, (_, index) => ({
-    id: index,
-    horario: `${8 + index}:00`,
-    aulas: [
-      {
-        id: `${index}-1`,
-        aluno: `Aluno ${index + 1}`,
-        tipo: index % 2 === 0 ? "Prática" : "Teórica",
-        carro: `Carro ${index + 1}`,
-        local: `Local ${index + 1}`,
-      },
-    ],
-  }));
+  useEffect(() => {
+    carregarAulas();
+  }, [selectedDate]);
 
-  const onDateChange = (event, selected) => {
-    setShowDatePicker(false);
-    if (selected) {
-      setSelectedDate(selected);
+  const carregarAulas = async () => {
+    try {
+      const response = await getAulas(selectedDate.toISOString().split("T")[0]);
+      setAulas(response);
+    } catch (error) {
+      console.error("Erro ao carregar aulas:", error);
     }
   };
 
   const abrirModal = (aula = null) => {
     setAulaSelecionada(
       aula || {
-        horario: "",
-        aluno: "",
-        carro: "",
-        local: "",
-        tipo: "",
+        id_aula: null,
+        id_aluno: "",
+        id_usuario: "",
+        data_aula: selectedDate.toISOString().split("T")[0],
+        hora_aula: "",
+        tipo_aula: "1", 
+        status_aula: "1", 
+        motivo_cancelamento: "",
+        placa_carro: "",
       }
     );
     setModalVisible(true);
@@ -57,9 +55,18 @@ export default function CalendarScreen() {
     setAulaSelecionada(null);
   };
 
-  const salvarAula = () => {
-    console.log("Aula salva:", aulaSelecionada);
-    fecharModal();
+  const salvarAula = async () => {
+    try {
+      if (aulaSelecionada.id_aula) {
+        await updateAula(aulaSelecionada);
+      } else {
+        await addAula(aulaSelecionada);
+      }
+      carregarAulas();
+      fecharModal();
+    } catch (error) {
+      console.error("Erro ao salvar aula:", error);
+    }
   };
 
   const onTimeChange = (event, selectedTime) => {
@@ -67,10 +74,7 @@ export default function CalendarScreen() {
     if (selectedTime) {
       setAulaSelecionada({
         ...aulaSelecionada,
-        horario: selectedTime.toLocaleTimeString([], {
-          hour: "2-digit",
-          minute: "2-digit",
-        }),
+        hora_aula: selectedTime.toTimeString().split(" ")[0],
       });
     }
   };
@@ -88,33 +92,23 @@ export default function CalendarScreen() {
         </Text>
       </Pressable>
 
-      {showDatePicker && (
-        <DateTimePicker
-          value={selectedDate}
-          mode="date"
-          display="default"
-          onChange={onDateChange}
-        />
-      )}
-
       <ScrollView style={styles.scrollContainer}>
-        {horarios.map((horario) => (
-          <View key={horario.id} style={styles.horarioContainer}>
-            <Text style={styles.horarioText}>{horario.horario}</Text>
-            {horario.aulas.map((aula) => (
-              <Pressable
-                key={aula.id}
-                style={[
-                  styles.aulaCard,
-                  aula.tipo === "Prática" ? styles.praticaCard : styles.teoricaCard,
-                ]}
-                onPress={() => abrirModal(aula)}
-              >
-                <Text style={styles.aulaInfo}>{aula.aluno}</Text>
-                <Text style={styles.aulaSubText}>Tipo: {aula.tipo}</Text>
-              </Pressable>
-            ))}
-          </View>
+        {aulas.map((aula) => (
+          <Pressable
+            key={aula.id_aula}
+            style={[
+              styles.aulaCard,
+              aula.tipo_aula === 1 ? styles.praticaCard : styles.teoricaCard,
+            ]}
+            onPress={() => abrirModal(aula)}
+          >
+            <Text style={styles.aulaInfo}>
+              {aula.hora_aula} - Aluno: {aula.id_aluno || "N/A"}
+            </Text>
+            <Text style={styles.aulaSubText}>
+              Tipo: {aula.tipo_aula === 1 ? "Prática" : "Teórica"}
+            </Text>
+          </Pressable>
         ))}
       </ScrollView>
 
@@ -128,14 +122,14 @@ export default function CalendarScreen() {
           <View style={styles.modalContainer}>
             <View style={styles.modalContent}>
               <Text style={styles.modalTitle}>
-                {aulaSelecionada.id ? "Editar Aula" : "Adicionar Aula"}
+                {aulaSelecionada.id_aula ? "Editar Aula" : "Adicionar Aula"}
               </Text>
               <Pressable
                 onPress={() => setShowTimePicker(true)}
                 style={styles.timeInput}
               >
                 <Text style={styles.timeText}>
-                  {aulaSelecionada.horario || "Selecione o horário"}
+                  {aulaSelecionada.hora_aula || "Selecione o horário"}
                 </Text>
               </Pressable>
               {showTimePicker && (
@@ -147,31 +141,24 @@ export default function CalendarScreen() {
                 />
               )}
               <Input
-                label="Aluno"
-                value={aulaSelecionada.aluno}
+                label="ID Aluno"
+                value={aulaSelecionada.id_aluno}
                 onChangeText={(text) =>
-                  setAulaSelecionada({ ...aulaSelecionada, aluno: text })
+                  setAulaSelecionada({ ...aulaSelecionada, id_aluno: text })
                 }
               />
               <Input
-                label="Carro"
-                value={aulaSelecionada.carro}
+                label="Placa do Carro"
+                value={aulaSelecionada.placa_carro}
                 onChangeText={(text) =>
-                  setAulaSelecionada({ ...aulaSelecionada, carro: text })
-                }
-              />
-              <Input
-                label="Local"
-                value={aulaSelecionada.local}
-                onChangeText={(text) =>
-                  setAulaSelecionada({ ...aulaSelecionada, local: text })
+                  setAulaSelecionada({ ...aulaSelecionada, placa_carro: text })
                 }
               />
               <Input
                 label="Tipo"
-                value={aulaSelecionada.tipo}
+                value={aulaSelecionada.tipo_aula.toString()}
                 onChangeText={(text) =>
-                  setAulaSelecionada({ ...aulaSelecionada, tipo: text })
+                  setAulaSelecionada({ ...aulaSelecionada, tipo_aula: text })
                 }
               />
 
@@ -231,16 +218,6 @@ const styles = StyleSheet.create({
   },
   scrollContainer: {
     flex: 1,
-  },
-  horarioContainer: {
-    marginBottom: 10,
-  },
-  horarioText: {
-    fontSize: 14,
-    fontWeight: "bold",
-    marginBottom: 5,
-    fontFamily: "Montserrat",
-    color: "#2C2F33",
   },
   aulaCard: {
     padding: 10,
