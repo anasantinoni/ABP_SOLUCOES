@@ -1,15 +1,21 @@
 import './gesture-handler';
+import React from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import { createDrawerNavigator } from '@react-navigation/drawer';
-import HomeScreen from './components/HomeScreen';
-import PesquisaAluno from './components/PesquisaAluno';
-import FinanceiroAluno from './components/FinanceiroAluno';
-import DetalhesAluno from './components/DetalhesAluno';
-import Agenda from './components/Agenda';
-
 import { PaperProvider } from 'react-native-paper';
+import { StyleSheet, Text, View } from 'react-native';
+
+import HomeScreen from './screens/HomeScreen';
+import FinanceiroAluno from './screens/FinanceiroAluno';
+import PesquisaAluno from './screens/PesquisaAluno';
+import DetalhesAluno from './screens/DetalhesAluno';
+import CadastrarAluno from './screens/CadastrarAluno';
+import Agenda from './screens/Agenda';
+import Login from './screens/Login';
+
 
 const Drawer = createDrawerNavigator();
+
 
 const theme = {
   dark: false,
@@ -22,28 +28,37 @@ const theme = {
     text: 'black',
     border: 'black',
     notification: 'black',
+    error: '#ff0000',
   },
 };
 
 export default function App() {
   return (
-      <PaperProvider theme={theme}>
-        <NavigationContainer>
-          <Drawer.Navigator>
-            <Drawer.Screen name="Home" component={HomeScreen}/>
-            <Drawer.Screen name="PesquisaAluno" options={{
-              title: 'Pesquisa de Aluno',
-            }} component={PesquisaAluno}/>
-            <Drawer.Screen name="FinanceiroAluno" options={{
-              title: 'Financeiro',
-            }} component={FinanceiroAluno}/>
-            <Drawer.Screen name="Agenda" component={Agenda}/>
-            <Drawer.Screen name="DetalhesAluno" options={{
-              title: 'Detalhes do Aluno',
-            }} component={DetalhesAluno}/>
-          </Drawer.Navigator>
-        </NavigationContainer>
-      </PaperProvider>
+    <PaperProvider theme={theme}>
+      <NavigationContainer>
+        <Drawer.Navigator initialRouteName="Home">
+          <Drawer.Screen name="Home" component={HomeScreen} />
+          <Drawer.Screen name="FinanceiroAluno" component={FinanceiroAluno} />
+          <Drawer.Screen name="PesquisaAluno" component={PesquisaAluno} />
+          <Drawer.Screen options={{ drawerItemStyle: { display: "none" } }} name="DetalhesAluno" component={DetalhesAluno} />
+          <Drawer.Screen options={{ drawerItemStyle: { display: 'none' } }} name="CadastrarAluno" component={CadastrarAluno} />
+          <Drawer.Screen name="Agenda" component={Agenda} />
+          <Drawer.Screen options={{
+            headerShown: false,
+            drawerItemStyle: { display: 'none' }
+          }} name="Login" component={Login} />
+        </Drawer.Navigator>
+      </NavigationContainer>
+    </PaperProvider>
   );
 }
 
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: '#fff',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+});

@@ -1,5 +1,6 @@
-import { View, Text, StyleSheet, Pressable } from "react-native";
+import { View, Text, StyleSheet, Pressable, ScrollView } from "react-native";
 import { TextInput, useTheme } from "react-native-paper";
+import { Button } from "react-native-paper";
 import React from "react";
 
 export default function PesquisaAluno({ navigation }) {
@@ -30,6 +31,7 @@ export default function PesquisaAluno({ navigation }) {
   };
 
   return (
+    <ScrollView>
     <View
       style={[
         styles.container,
@@ -38,11 +40,18 @@ export default function PesquisaAluno({ navigation }) {
         },
       ]}
     >
-      <TextInput
-        label="Digite o nome do aluno"
-        style={{ width: "100%" }}
-        onChangeText={(text) => buscarAluno(text)}
-      />
+      <View style={{
+        flexDirection: 'row',
+        justifyContent: 'center',
+        alignItems: 'center'
+      }}>
+        <TextInput
+          label="Digite o nome do aluno"
+          style={{ width: "60%" }}
+          onChangeText={(text) => buscarAluno(text)}
+        />
+        <Button onPress={ () => {navigation.navigate("CadastrarAluno")} } mode="contained" style={{ flex: "1"}} >Adicionar</Button>
+      </View>
       {aluno ? (
         aluno.map((aluno) => (
           <Pressable
@@ -81,6 +90,7 @@ export default function PesquisaAluno({ navigation }) {
         <Text>Aluno não encontrado</Text>
       )}
     </View>
+    </ScrollView>
   );
 }
 
