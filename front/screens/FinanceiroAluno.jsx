@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   View,
   Text,
@@ -8,33 +8,62 @@ import {
 } from "react-native";
 import { PieChart } from "react-native-chart-kit";
 import DateTimePicker from "@react-native-community/datetimepicker";
+import { useDatabase } from "../database/useDatabase";
 
 export default function FinanceiroAluno() {
   const [startDate, setStartDate] = useState(new Date());
   const [endDate, setEndDate] = useState(new Date());
   const [showStartPicker, setShowStartPicker] = useState(false);
   const [showEndPicker, setShowEndPicker] = useState(false);
+  const [financeiros, setFinanceiros] = useState([]);
 
-  // exemplo grafico
-  const data = [
+  const { getFinanceiros } = useDatabase();
+
+  useEffect(() => {
+    carregarDadosFinanceiros();
+  }, [startDate, endDate]);
+
+  const carregarDadosFinanceiros = async () => {
+    try {
+      const start = startDate.toISOString().split("T")[0];
+      const end = endDate.toISOString().split("T")[0];
+      const response = await getFinanceiros({ startDate: start, endDate: end });
+      setFinanceiros(response);
+    } catch (error) {
+      console.error("Erro ao carregar dados financeiros:", error);
+    }
+  };
+
+  const calcularTotais = () => {
+    let totalReceber = 0;
+    let totalPagar = 0;
+
+    financeiros.forEach((item) => {
+      if (item.status === 1) totalReceber += item.valor; // Status 1: A Receber
+      if (item.status === 2) totalPagar += item.valor; // Status 2: A Pagar
+    });
+
+    return { totalReceber, totalPagar };
+  };
+
+  const { totalReceber, totalPagar } = calcularTotais();
+
+  const dataGrafico = [
     {
       name: "A Receber",
-      amount: 2369.99,
+      amount: totalReceber,
       color: "#4CAF50",
       legendFontColor: "#7F7F7F",
       legendFontSize: 15,
     },
     {
       name: "A Pagar",
-      amount: 1560.20,
+      amount: totalPagar,
       color: "#F44336",
       legendFontColor: "#7F7F7F",
       legendFontSize: 15,
     },
   ];
-
-  const totalReceber = data.find((item) => item.name === "A Receber").amount;
-  const totalPagar = data.find((item) => item.name === "A Pagar").amount;
 
   return (
     <View style={styles.container}>
@@ -94,7 +123,7 @@ export default function FinanceiroAluno() {
       <ScrollView>
         <View style={styles.chartContainer}>
           <PieChart
-            data={data}
+            data={dataGrafico}
             width={300}
             height={220}
             chartConfig={{
@@ -121,7 +150,6 @@ export default function FinanceiroAluno() {
           </View>
         </View>
       </ScrollView>
-
     </View>
   );
 }
@@ -193,5 +221,5 @@ const styles = StyleSheet.create({
     fontFamily: "Poppins",
     color: "#0056B3",
     marginTop: 5,
-  }
+  },
 });
