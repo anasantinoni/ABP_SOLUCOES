@@ -1,8 +1,17 @@
-import React from "react";
+import React, { useEffect } from "react";
 import { View, StyleSheet, Text } from "react-native";
 import Button from "../components/Button";
+import { logout, verifyAuth } from "../actions/auth";
 
 export default function HomeScreen({ navigation }) {
+
+  useEffect(() => {
+    const isAuth = verifyAuth();
+    if (!isAuth) {
+      navigation.navigate("Login");
+    }
+  }, []);
+
   return (
     <View style={styles.container}>
       {/* Título de boas-vindas */}
@@ -26,6 +35,34 @@ export default function HomeScreen({ navigation }) {
           icon="event"
           onPress={() => navigation.navigate("Agenda")}
           style={styles.button}
+        />
+      </View>
+      <View style={{
+        position: "absolute",
+        bottom: 10,
+        width: "100%",
+        alignItems: "center",
+      }}>
+        <Button
+          title="Sair"
+          icon="exit-to-app"
+          onPress={() => {
+            logout();
+            navigation.navigate("Login");
+          }}
+          style={{
+            width: "30%",
+            height: 50,
+            backgroundColor: "#ff0000", // Vermelho da paleta
+            borderRadius: 12,
+            justifyContent: "center",
+            alignItems: "center",
+            shadowColor: "#000",
+            shadowOffset: { width: 0, height: 2 },
+            shadowOpacity: 0.2,
+            shadowRadius: 4,
+            elevation: 3,
+          }}
         />
       </View>
     </View>

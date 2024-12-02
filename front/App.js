@@ -6,7 +6,7 @@ import { PaperProvider } from 'react-native-paper';
 import { StyleSheet } from 'react-native';
 import { SQLiteProvider } from 'expo-sqlite';
 
-import { initializeDatabase } from './front/database/initializeDatabase';
+import { initializeDatabase } from './database/initializeDatabase';
 import HomeScreen from './screens/HomeScreen';
 import FinanceiroAluno from './screens/FinanceiroAluno';
 import PesquisaAluno from './screens/PesquisaAluno';
@@ -14,6 +14,7 @@ import DetalhesAluno from './screens/DetalhesAluno';
 import CadastrarAluno from './screens/CadastrarAluno';
 import Agenda from './screens/Agenda';
 import Login from './screens/Login';
+import Registro from './screens/Registro';
 
 const Drawer = createDrawerNavigator();
 
@@ -37,7 +38,7 @@ export default function App() {
     <SQLiteProvider databaseName="myDatabase.db" onInit={initializeDatabase}>
       <PaperProvider theme={theme}>
         <NavigationContainer>
-          <Drawer.Navigator initialRouteName="Home">
+          <Drawer.Navigator initialRouteName="Login">
             <Drawer.Screen name="Home" component={HomeScreen} />
             <Drawer.Screen name="FinanceiroAluno" component={FinanceiroAluno} />
             <Drawer.Screen name="PesquisaAluno" component={PesquisaAluno} />
@@ -59,6 +60,14 @@ export default function App() {
               }}
               name="Login"
               component={Login}
+            />
+            <Drawer.Screen
+              options={{
+                headerShown: false,
+                drawerItemStyle: { display: 'none' },
+              }}
+              name="Registro"
+              component={Registro}
             />
           </Drawer.Navigator>
         </NavigationContainer>
